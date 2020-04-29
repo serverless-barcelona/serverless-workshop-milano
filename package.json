@@ -1,0 +1,14 @@
+{
+  "name": "serverless-workshop-1",
+  "version": "0.1.0",
+  "scripts": {
+    "deploy-local": "npm install && sls deploy -v && node postdeploy.js",
+    "deploy": "npm install && echo $WEBHOOK > webhook.txt && sls deploy -v && node postdeploy.js",
+    "remove": "npm install && sls package && node empty-buckets.js && sls remove -v"
+  },
+  "private": true,
+  "dependencies": {
+    "aws-sdk": "2.656.0",
+    "@slack/webhook": "5.0.3"
+  }
+}

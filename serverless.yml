@@ -1,0 +1,61 @@
+service: sls-bcn-workshop-${self:custom.accountId}
+
+frameworkVersion: ">=1.2.0 <2.0.0"
+
+custom:
+  s3Bucket: ${self:service}-web
+  accountId: ${file(./accountHelper.js):getAccountId}
+  streamBucket: ${self:service}-athena
+  commonName: bcn_workshop_2_${self:custom.accountId}
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: eu-west-1
+  memorySize: 128
+  timeout: 20
+  deploymentBucket: serverless-deploy-${self:custom.accountId}-${self:provider.region}
+  iamRoleStatements: # IAM role statements so that services can be accessed in the AWS account
+  - Effect: 'Allow'
+    Action:
+      - 'firehose:PutRecord'
+    Resource:
+      Fn::GetAtt: 
+            - FirehoseStream
+            - Arn
+
+functions:
+  openApi:
+    handler: handler.api
+    events:
+      - http:
+          path: publicapi
+          method: post
+          cors: true
+  privateApi:
+    handler: firehoseHandler.push
+    environment:
+      DELIVERY_STREAM: 
+        Ref: FirehoseStream
+    events:
+      - http:
+          path: privateapi
+          method: post
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: CognitoAuthorizer
+  analyticsConsumer:
+    handler: analytics.consume
+    environment:
+      WEBHOOK: ${file(./webhook.txt)}
+ 
+resources:
+  - ${file(./cf-resources/cognito.yml)}
+  - ${file(./cf-resources/website-bucket.yml)}
+  - ${file(./cf-resources/firehose.yml)}
+  - ${file(./cf-resources/outputs.yml)}
+  - ${file(./cf-resources/kinesis-analytics.yml)}
+  - ${file(./cf-resources/glue.yml)}
+

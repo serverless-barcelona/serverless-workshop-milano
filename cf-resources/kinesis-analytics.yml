@@ -1,0 +1,94 @@
+Resources:
+  KinesisAnalyticsApplication:
+    Type: AWS::KinesisAnalytics::Application
+    DependsOn:
+      - FirehoseStream
+      - KinesisAnalyticsServiceExecutionRole
+    Properties:
+      ApplicationName: ${self:service}-app
+      ApplicationDescription: Kinesis Analytics Application Test
+      ApplicationCode: >
+        CREATE OR REPLACE STREAM "FIREHOSE_STREAM_OUT" (
+          event_user VARCHAR(128),
+          event_timestamp VARCHAR(128),
+          event_type VARCHAR(128),
+          event_screenx VARCHAR(128),
+          event_screeny VARCHAR(128),
+          event_toElement VARCHAR(128)
+        );
+
+        CREATE OR REPLACE PUMP "STREAM_PUMP" AS
+            INSERT INTO "FIREHOSE_STREAM_OUT"
+                SELECT STREAM "event_user", "event_timestamp", "event_type", "event_screenx", "event_screeny", "event_toElement"
+                FROM FIREHOSE_STREAM_001
+              WHERE (CAST("event_screenx" AS int) < 400) AND (CAST("event_screeny" AS int) < 200)
+      
+      Inputs:
+        - NamePrefix: FIREHOSE_STREAM
+          KinesisFirehoseInput:
+            ResourceARN: !GetAtt FirehoseStream.Arn
+            RoleARN: !GetAtt KinesisAnalyticsServiceExecutionRole.Arn
+          InputSchema:
+            RecordColumns:
+              - Name: event_user
+                SqlType: VARCHAR(128)
+                Mapping: $.user
+              - Name: event_timestamp
+                SqlType: VARCHAR(128)
+                Mapping: $.timestamp
+              - Name: event_type
+                SqlType: VARCHAR(128)
+                Mapping: $.type
+              - Name: event_screenx
+                SqlType: VARCHAR(128)
+                Mapping: $.x
+              - Name: event_screeny
+                SqlType: VARCHAR(128)
+                Mapping: $.y
+              - Name: event_toElement
+                SqlType: VARCHAR(128)
+                Mapping: $.toElement
+            RecordFormat:
+              RecordFormatType: JSON
+              MappingParameters:
+                JSONMappingParameters:
+                  RecordRowPath: $
+  BasicApplicationOutputs:
+    Type: AWS::KinesisAnalytics::ApplicationOutput
+    DependsOn: 
+      - KinesisAnalyticsApplication
+      - AnalyticsConsumerLambdaFunction
+    Properties:
+      ApplicationName: !Ref KinesisAnalyticsApplication
+      Output:
+        Name: FIREHOSE_STREAM_OUT
+        DestinationSchema:
+          RecordFormatType: "JSON"
+        LambdaOutput:
+          ResourceARN: !GetAtt AnalyticsConsumerLambdaFunction.Arn
+          RoleARN: !GetAtt KinesisAnalyticsServiceExecutionRole.Arn
+
+  KinesisAnalyticsServiceExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: kinesisanalytics.amazonaws.com
+            Action: "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: AnalyticsPermissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "firehose:DescribeDeliveryStream"
+                  - "firehose:Get*"
+                Resource: !GetAtt FirehoseStream.Arn
+              - Effect: Allow
+                Action: "lambda:*"
+                Resource: !GetAtt AnalyticsConsumerLambdaFunction.Arn

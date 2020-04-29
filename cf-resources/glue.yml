@@ -1,0 +1,67 @@
+Resources:
+  AthenaDatabase:
+    Type: AWS::Glue::Database
+    Properties: 
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput: 
+        Name: ${self:custom.commonName}_db	
+        Description: Database to hold tables for flights data
+        LocationUri: s3://${self:custom.streamBucket}/workshop
+
+  AthenaTable:
+    Type: AWS::Glue::Table
+    DependsOn:
+      - AthenaDatabase
+    Properties: 
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref AthenaDatabase
+      TableInput: 
+        Name: ${self:custom.commonName}
+        Description: Table to hold clicks from users
+        TableType: EXTERNAL_TABLE
+        Parameters:
+          CrawlerSchemaDeserializerVersion: '1.0'
+          CrawlerSchemaSerializerVersion: '1.0'
+          classification: json
+          compressionType: gzip
+          typeOfData: file
+          EXTERNAL: 'TRUE'
+        PartitionKeys: 
+          - Name: year
+            Type: bigint
+          - Name: month
+            Type: bigint
+          - Name: day
+            Type: bigint
+          - Name: hour
+            Type: bigint
+        # Retention: Integer
+        StorageDescriptor: 
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Location: s3://${self:custom.streamBucket}/workshop
+          Compressed: false
+          Columns:
+          - Name: user
+            Type: string
+            Comment: from deserializer
+          - Name: timestamp
+            Type: bigint
+            Comment: from deserializer
+          - Name: type
+            Type: string
+            Comment: from deserializer
+          - Name: x
+            Type: int
+            Comment: from deserializer
+          - Name: y
+            Type: int
+            Comment: from deserializer
+          - Name: toelement
+            Type: string
+            Comment: from deserializer
+          SerdeInfo:
+            SerializationLibrary: org.openx.data.jsonserde.JsonSerDe
+            Parameters:
+              paths: day,hour,month,timestamp,toElement,type,user,x,y,year
+              serialization.format: '1'

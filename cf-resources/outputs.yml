@@ -1,0 +1,39 @@
+Outputs:
+  CognitoUserPoolId:
+    Description: Cognito User Pool ID
+    Value:
+      Ref: CognitoUserPool
+
+  CognitoUserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value:
+      Ref: 'CognitoUserPoolClient'
+
+  WebsiteBucket:
+    Description: 'Bucket where to store'
+    Value:
+      Ref: 'WebAppS3Bucket'
+
+  AthenaBucket:
+    Description: 'Bucket where Athena read the partitions (and Firehose stores the events)'
+    Value:
+      Ref: 'StreamBucket'
+
+  WebsiteURL:
+    Value: !GetAtt [WebAppS3Bucket, WebsiteURL]
+    Description: URL for website hosted on S3
+
+  CognitoIdentityPoolId:
+    Value:
+      Ref: CognitoIdentityPool
+    Description: Cognito User Identity Pool ID
+
+  DeliveryStreamName:
+    Value:
+      Ref: FirehoseStream
+    Description: Firehose delivery Stream Name
+
+  AnalyticsApplication:
+    Value:
+      Ref: KinesisAnalyticsApplication
+    Description: Kinesis Analytics Application

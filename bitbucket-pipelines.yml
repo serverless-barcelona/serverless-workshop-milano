@@ -1,0 +1,9 @@
+image: dottorsaimon/nodeawscli:1.2
+
+pipelines:
+  default:
+    - step:
+        script: 
+          - npm run deploy
+
+# https://confluence.atlassian.com/bitbucket/configure-bitbucket-pipelines-yml-792298910.html

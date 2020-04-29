@@ -1,0 +1,22 @@
+#confirmSection, #signinSection, #loggedInSection {
+    display: none;
+}
+
+body {
+    background-color: black;
+}
+
+h2{
+    text-align: center;
+}
+
+#box{
+  width: 399px;
+  height: 199px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  background-color: black;
+  opacity: 0.2;
+}
