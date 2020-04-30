@@ -36,8 +36,7 @@ The stack will deploy:
 - Push the changes to the master branch to trigger the pipeline and deploy the stack
 
 # How to deploy locally
-- In package.json edit the line of "deploy-local" script
-- Change the mock webhook with your Slack Webhook and the profile (dev) with your profile (defined in your aws credentials file)
+- Change the mock webhook with your Slack Webhook in webhook.txt
 - Run: npm run deploy-local
 
 # How to try the stack

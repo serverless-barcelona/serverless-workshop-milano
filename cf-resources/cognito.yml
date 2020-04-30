@@ -32,7 +32,6 @@ Resources:
                 - Fn::GetAtt: [CognitoUserPool, Arn]
             IdentitySource: method.request.header.Authorization
 
-    # Creates a federeated Identity pool
     CognitoIdentityPool:
         Type: AWS::Cognito::IdentityPool
         Properties:
